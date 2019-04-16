@@ -9,14 +9,16 @@ var  hp: Int;
 val armure: Int;
 val vitesse : Int;
   var position :Int;
+  val porteMax : Int;
   def launchAttack () : Int =
   {
     attack
   }
-  override def toString: String = s"id : $id hp : $hp attack : $attack armor : $armure  vitesse : $vitesse position : $position\n"
+
+  override def toString: String = s"id : $id hp : $hp attack : $attack armor : $armure  vitesse : $vitesse position : $position porté Maximale : $porteMax\n"
 }
-class VertxProperty()
-case class Solar(val id: String= "Solar", var  hp : Int=363,  val attack : Int =0, val armure: Int=44, val vitesse : Int=50, var position: Int= scala.util.Random.nextInt(500)) extends node
+
+case class Solar(id: String= "Solar", var  hp : Int=363,  attack : Int =18,  armure: Int=44, vitesse : Int=50, var position: Int= scala.util.Random.nextInt(500), porteMax : Int = 110) extends node
 {
   override def launchAttack() : Int =
   {
@@ -26,12 +28,12 @@ case class Solar(val id: String= "Solar", var  hp : Int=363,  val attack : Int =
   }
 
 }
-case class Warlord( val id: String="Warlord", var hp: Int =141,val attack : Int =0,armure: Int=27,vitesse: Int = 30, var position: Int= scala.util.Random.nextInt(500)) extends node
+case class Warlord( id: String="Warlord", var hp: Int =141,attack : Int =10,armure: Int=27,vitesse: Int = 30, var position: Int= scala.util.Random.nextInt(500), porteMax : Int = 10) extends node
 {
   override def launchAttack() : Int =
   {
     val r = scala.util.Random
-    var res = attack+ r.nextInt(5)+r.nextInt(5)+r.nextInt(5)+3;
+    var res = attack+ r.nextInt(7)+1;
     res
   }
 
@@ -39,9 +41,9 @@ case class Warlord( val id: String="Warlord", var hp: Int =141,val attack : Int 
 object test extends App {
   def applyDamage(vId :VertexId, perso : node ,dommage : Int) : node =
   {
-    var res = Solar();
-    res.hp= perso.hp-dommage
-    res
+
+    perso.hp= perso.hp-dommage
+    perso
 
   }
 
@@ -62,26 +64,19 @@ object test extends App {
   var myEdges = sc.parallelize(Array(Edge(1L,2L,"1"),Edge(1L,3L,"2")))
   var myGraph = Graph(myVertices, myEdges)
   print("----- Graphe de base ----")
-  myGraph.triplets.foreach(print(_) )
+  //myGraph.triplets.foreach(print(_) )
+  myGraph.vertices.foreach(print(_))
   print("\n")
+  /* Premier aggregate pour trouver l'ennemi le plus proche*/
   val messages = myGraph.aggregateMessages[Int](
 //   sendAttack,
   //  mergeAttack,
     triplet => {
-      //if(scala.math.abs(triplet.srcAttr.position-triplet.dstAttr.position)<10)
-        //{
-      /*    triplet.sendToDst(triplet.srcAttr.launchAttack())
-          triplet.sendToSrc(triplet.dstAttr.launchAttack())
-        */
+
           triplet.sendToSrc(triplet.dstAttr.position)
-
-        //}
-
     },
     {
       (a,b) => {
-  //      print(a+"\n")
-    //    print(b+"\n")
         if(a<b)
           {
             a
@@ -95,32 +90,39 @@ object test extends App {
   )
 
   //messages.foreach(print(_))
-  val damage = myGraph.aggregateMessages[node](
+  /* Deuxième  pour l'attaquer si il est assez proche 'pas encore implémenter la porté)*/
+  val damage = myGraph.aggregateMessages[Int](
     triplet=>{
       if(triplet.dstAttr.position==messages.collect().last._2) {
-        triplet.sendToSrc(triplet.dstAttr)
-        triplet.sendToDst(triplet.srcAttr)
+        triplet.sendToDst(triplet.srcAttr.launchAttack())
       }
     },
     (a,b) => {
-      a
+      a+b
     }
   )
+  /* On regarde ce que les ennemis vont faire !*/
+  val damageEnemy = myGraph.aggregateMessages[Int](
+    triplet=>{
+      //if(scala.math.abs(triplet.dstAttr.position-triplet.srcAttr.position)<=triplet.dstAttr.porteMax+500) {
+        triplet.sendToSrc(triplet.dstAttr.launchAttack())
 
-
+     // }
+    },
+    (a,b) => {
+      a+b
+    }
+  )
+  print("----- Test ----\n")
+  //myGraph.triplets.foreach(print(_) )
+  damageEnemy.foreach(print(_))
+  print("\n")
   myGraph = myGraph.joinVertices(damage)(
-    (vid, personnage, msg) => applyDamage(vid, personnage, msg.launchAttack()))
-  print("----- Nouveau graphe  ----")
-  myGraph.triplets.foreach(print(_))
+    (vid, personnage, msg) => applyDamage(vid, personnage, msg))
+  myGraph.vertices.foreach(print(_))
+  myGraph = myGraph.joinVertices(damageEnemy)(
+    (vid, personnage, msg) => applyDamage(vid, personnage, msg))
+  print("----- Nouveau graphe  ----\n")
+  myGraph.vertices.foreach(print(_))
 
 }
-/*def sendAttack(ctx: EdgeContext[Node, Node, Long]): Unit = {
-    ctx.sendToDst(ctx.srcAttr.armure)
-    ctx.sendToSrc(ctx.dstAttr.armure)
-
-}
-def pick(val attack1 :Int,val attack2 :Int)
- {
-   attack1
- }
-*/
