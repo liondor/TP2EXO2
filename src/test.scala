@@ -16,17 +16,31 @@ val vitesse : Int
   {
     attack
   }
+  def launchAttack (s : String) : Int =
+  {
+    attack
+  }
 
   override def toString: String = s"id : $id hp : $hp attack : $attack armor : $armure  vitesse : $vitesse position : $position porté Maximale : $porteMax\n"
 }
-
+/* La caractéristique attaque ne sert  à rien pour le solar*/
 case class Solar(id: String= "Solar", var  hp : Int=363,  attack : Int =18,  armure: Int=44, vitesse : Int=50, var position: Int= scala.util.Random.nextInt(300), porteMax : Int = 110) extends node
 {
-  override def launchAttack() : Int =
+   override def launchAttack(arme : String) : Int =
   {
-    val r = scala.util.Random
-    var res = attack+ r.nextInt(5)+r.nextInt(5)+r.nextInt(5)+3
-    res
+    if(arme.contentEquals("Sword"))
+       {
+         val r = scala.util.Random
+         var res = 18+ r.nextInt(5)+r.nextInt(5)+r.nextInt(5)+3
+         res
+       }
+    else
+      {
+        val r = scala.util.Random
+        var res = r.nextInt(5)+r.nextInt(5)+2+14
+        res
+      }
+
   }
 
 }//scala.util.Random.nextInt(500)
@@ -129,13 +143,23 @@ object test extends App {
           val posSolar = container.find(p => p._1 == triplet.srcId)
           val posEnnemi = container.find(p => p._1 == triplet.dstId)
 
-          if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) == position) {
+          if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) == position)
+          {
 
-            if(scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )<= triplet.srcAttr.porteMax)
-            {
-              var degat = triplet.srcAttr.launchAttack()
-              triplet.sendToDst("dmg",degat)
-              print("Attaque sur un " + triplet.dstAttr.id + ", le Solar lui inflige " + degat + " points de dommages\n")
+            if(scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )<= triplet.srcAttr.porteMax) {
+              if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position) <= 10)
+              {
+                var degat = triplet.srcAttr.launchAttack("Sword")
+                triplet.sendToDst("dmg", degat)
+                print("Bim dans les dents ! Attaque sur un " + triplet.dstAttr.id + " avec la greatsword, le Solar lui inflige " + degat + " points de dommages\n")
+              }
+              else
+              {
+                var degat = triplet.srcAttr.launchAttack("Arc")
+                triplet.sendToDst("dmg", degat)
+                print("Attaque sur un " + triplet.dstAttr.id + " avec l'arc! Le Solar lui inflige " + degat + " points de dommages\n")
+
+              }
             }
             else
               {
