@@ -20,7 +20,7 @@ val vitesse : Int
   override def toString: String = s"id : $id hp : $hp attack : $attack armor : $armure  vitesse : $vitesse position : $position porté Maximale : $porteMax\n"
 }
 
-case class Solar(id: String= "Solar", var  hp : Int=363,  attack : Int =18,  armure: Int=44, vitesse : Int=50, var position: Int= scala.util.Random.nextInt(500), porteMax : Int = 110) extends node
+case class Solar(id: String= "Solar", var  hp : Int=363,  attack : Int =18,  armure: Int=44, vitesse : Int=50, var position: Int= scala.util.Random.nextInt(300), porteMax : Int = 110) extends node
 {
   override def launchAttack() : Int =
   {
@@ -29,8 +29,8 @@ case class Solar(id: String= "Solar", var  hp : Int=363,  attack : Int =18,  arm
     res
   }
 
-}
-case class Warlord( id: String="Warlord", var hp: Int =141,attack : Int =10,armure: Int=27,vitesse: Int = 30, var position: Int= scala.util.Random.nextInt(500), porteMax : Int = 10) extends node
+}//scala.util.Random.nextInt(500)
+case class Warlord( id: String="Warlord", var hp: Int =141,attack : Int =10,armure: Int=27,vitesse: Int = 30, var position: Int= scala.util.Random.nextInt(300), porteMax : Int = 10) extends node
 {
   override def launchAttack() : Int =
   {
@@ -143,12 +143,26 @@ object test extends App {
                   {
                     print("On bouge vers les ennemis")
                     if (posSolar.last._2.position - posEnnemi.last._2.position  >0) {
-                      var mvmt = -triplet.srcAttr.vitesse
+                      if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) < posSolar.last._2.vitesse) {
+                      //var mvmt = -triplet.srcAttr.vitesse
+                      var mvmt = -scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )
                       triplet.sendToSrc("mvmt", mvmt)
+                      }
+                      else{
+                        var mvmt = -triplet.srcAttr.vitesse
+                        triplet.sendToSrc("mvmt", mvmt)
+                      }
+
                     }
                     else{
-                      var mvmt = triplet.srcAttr.vitesse
+                      if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) < posSolar.last._2.vitesse) {
+                        var mvmt = scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )
+                        triplet.sendToSrc("mvmt", mvmt)
+                      }
+                        var mvmt = triplet.srcAttr.vitesse
                       triplet.sendToSrc("mvmt", mvmt)
+
+
                     }
 
                   }
@@ -207,12 +221,28 @@ object test extends App {
           {
               print("Un"+triplet.dstAttr.id+"s'approche du Solar !\n")
               if (posEnnemi.last._2.position - posSolar.last._2.position  >0) {
-                var mvmt = -triplet.dstAttr.vitesse
-                triplet.sendToDst("mvmt", mvmt)
+                //Si je peux me coller au Solar, je le fait !
+                if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) < posEnnemi.last._2.vitesse) {
+                  var mvmt = -scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )
+                  triplet.sendToDst("mvmt", mvmt)
+                }
+                  //Sinon je me déplacec dans sa direction
+                else{
+                  var mvmt = -triplet.dstAttr.vitesse
+                  triplet.sendToDst("mvmt", mvmt)
+                }
+
               }
               else{
-                var mvmt = triplet.dstAttr.vitesse
-                triplet.sendToDst("mvmt", mvmt)
+                  if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) < posEnnemi.last._2.vitesse) {
+                    var mvmt = scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )
+                    triplet.sendToDst("mvmt", mvmt)
+                  }
+                else{
+                    var mvmt = triplet.dstAttr.vitesse
+                    triplet.sendToDst("mvmt", mvmt)
+                  }
+
               }
 
             }
