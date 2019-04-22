@@ -145,20 +145,37 @@ object test extends App {
 
           if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) == position)
           {
+            var ciblage =35 - nbrAttaque*5
 
-            if(scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )<= triplet.srcAttr.porteMax) {
+            if(scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )<= triplet.srcAttr.porteMax)
+            {
               if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position) <= 10)
               {
-                var degat = triplet.srcAttr.launchAttack("Sword")
-                triplet.sendToDst("dmg", degat)
-                print("Bim dans les dents ! Attaque sur un " + triplet.dstAttr.id + " avec la greatsword, le Solar lui inflige " + degat + " points de dommages\n")
+                var ciblage =35 - nbrAttaque*5
+                if(ciblage>=posEnnemi.last._2.armure) {
+                  var degat = triplet.srcAttr.launchAttack("Sword")
+                  triplet.sendToDst("dmg", degat)
+                  print("Bim dans les dents ! Attaque sur un " + triplet.dstAttr.id + " avec la greatsword, le Solar lui inflige " + degat + " points de dommages\n")
+                }
+                else{
+                  triplet.sendToDst("dmg", 0)
+                  print("Un bon swing ! ....Dans le vent. Le Solar a râté son attaque à l'épée !\n")
+
+                }
               }
               else
               {
-                var degat = triplet.srcAttr.launchAttack("Arc")
-                triplet.sendToDst("dmg", degat)
-                print("Attaque sur un " + triplet.dstAttr.id + " avec l'arc! Le Solar lui inflige " + degat + " points de dommages\n")
+                var ciblage =31 - nbrAttaque*5
+                if(ciblage>=posEnnemi.last._2.armure) {
 
+                  var degat = triplet.srcAttr.launchAttack("Arc")
+                  triplet.sendToDst("dmg", degat)
+                  print("Attaque sur un " + triplet.dstAttr.id + " avec l'arc! Le Solar lui inflige " + degat + " points de dommages (itération n°"+nbrAttaque+")\n")
+                }
+                else {
+                  triplet.sendToDst("dmg", 0)
+                  print("Le Solar a râté son attaque à l'arc ! (Itération n°" + nbrAttaque + ") \n")
+                }
               }
             }
             else
@@ -243,7 +260,7 @@ object test extends App {
           }
           else
           {
-              print("Un"+triplet.dstAttr.id+"s'approche du Solar !\n")
+              print("Un "+triplet.dstAttr.id+" s'approche du Solar !\n")
               if (posEnnemi.last._2.position - posSolar.last._2.position  >0) {
                 //Si je peux me coller au Solar, je le fait !
                 if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) < posEnnemi.last._2.vitesse) {
@@ -296,5 +313,6 @@ object test extends App {
     //print("----- État actuel  ----\n")
 
     newGraph.vertices.foreach(print(_))
+    print("\n")
   }
 }
