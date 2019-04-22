@@ -124,7 +124,6 @@ object test extends App {
       position = messages.collect().last._2
 
       var damage = newGraph.aggregateMessages[Tuple2[String,Int]](
-
         triplet => {
           var container = myGraph.vertices.collect()
           val posSolar = container.find(p => p._1 == triplet.srcId)
@@ -189,25 +188,49 @@ object test extends App {
 
     /* On regarde ce que les ennemis vont faire !*/
   //  print("----- Tour des ennemis----\n")
-    val damageEnemy = newGraph.aggregateMessages[Int](
+    val damageEnemy = newGraph.aggregateMessages[Tuple2[String,Int]](
       triplet => {
         var container = myGraph.vertices.collect()
-        var valeur = container.find(p => p._1 == triplet.dstId)
-        if (valeur.last._2.hp > 0) {
-          var degat = triplet.dstAttr.launchAttack()
-          triplet.sendToSrc(degat)
-          print("Un " + triplet.dstAttr.id + " attaque le Solar !  Il lui inflige " + degat + " points de dommages\n")
-        }
+        val posSolar = container.find(p => p._1 == triplet.srcId)
+        val posEnnemi = container.find(p => p._1 == triplet.dstId)
+
+        if (posEnnemi.last._2.hp > 0) {
+
+          if(scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )<= triplet.dstAttr.porteMax)
+          {
+            var degat = posEnnemi.last._2.launchAttack()
+            triplet.sendToSrc("dmg",degat)
+            print("Un " + triplet.dstAttr.id + " attaque le Solar !  Il lui inflige " + degat + " points de dommages\n")
+
+          }
+          else
+          {
+              print("Un"+triplet.dstAttr.id+"s'approche du Solar !\n")
+              if (posEnnemi.last._2.position - posSolar.last._2.position  >0) {
+                var mvmt = -triplet.dstAttr.vitesse
+                triplet.sendToDst("mvmt", mvmt)
+              }
+              else{
+                var mvmt = triplet.dstAttr.vitesse
+                triplet.sendToDst("mvmt", mvmt)
+              }
+
+            }
+
+
+          }
+
       },
       (a, b) => {
-        a + b
+        ( a._1, a._2+b._2)
+
       }
     )
 
     print("\n")
     //print("----- Fin du tour----\n")
     newGraph = newGraph.joinVertices(damageEnemy)(
-      (vid, personnage, msg) => applyAction(vid, personnage,"dmg", msg))
+      (vid, personnage, msg) => applyAction(vid, personnage,msg._1, msg._2))
 
 
     newGraph = newGraph.subgraph(vpred = (id, attr) => attr.hp > 0)
