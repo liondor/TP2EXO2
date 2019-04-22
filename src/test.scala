@@ -24,7 +24,7 @@ val vitesse : Int
   override def toString: String = s"id : $id hp : $hp attack : $attack armor : $armure  vitesse : $vitesse position : $position porté Maximale : $porteMax\n"
 }
 /* La caractéristique attaque ne sert  à rien pour le solar*/
-case class Solar(id: String= "Solar", var  hp : Int=363,  attack : Int =18,  armure: Int=44, vitesse : Int=50, var position: Int= scala.util.Random.nextInt(300), porteMax : Int = 110) extends node
+case class Solar(id: String= "Solar", var  hp : Int=363,  attack : Int =18,  armure: Int=44, vitesse : Int=50, var position: Int= scala.util.Random.nextInt(100), porteMax : Int = 110) extends node
 {
    override def launchAttack(arme : String) : Int =
   {
@@ -44,7 +44,7 @@ case class Solar(id: String= "Solar", var  hp : Int=363,  attack : Int =18,  arm
   }
 
 }//scala.util.Random.nextInt(500)
-case class Warlord( id: String="Warlord", var hp: Int =141,attack : Int =10,armure: Int=27,vitesse: Int = 30, var position: Int= scala.util.Random.nextInt(300), porteMax : Int = 10) extends node
+case class Warlord( id: String="Warlord", var hp: Int =141,attack : Int =10,armure: Int=27,vitesse: Int = 30, var position: Int= scala.util.Random.nextInt(100), porteMax : Int = 10) extends node
 {
   override def launchAttack() : Int =
   {
@@ -104,18 +104,18 @@ object test extends App {
     var nbrAttaque: Int = 0
     while (nbrAttaque < 4) {
       /* Premier aggregate pour trouver l'ennemi le plus proche*/
-      var messages = newGraph.aggregateMessages[Int](
+      var messages = newGraph.aggregateMessages[Tuple2[VertexId,Int]](
         triplet => {
           var container = myGraph.vertices.collect()
           val posSolar = container.find(p => p._1 == triplet.srcId)
           val posEnnemi = container.find(p => p._1 == triplet.dstId)
           if (posEnnemi.last._2.hp > 0) {
-            triplet.sendToSrc(scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position))
+            triplet.sendToSrc(triplet.dstId,scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position))
           }
         },
         {
           (a, b) => {
-            if (a < b) {
+            if (a._2 < b._2) {
               a
             }
             else {
@@ -134,8 +134,8 @@ object test extends App {
         System.exit(0);
       }
       /* Deuxième  pour l'attaquer si il est assez proche 'pas encore implémenter la porté)*/
-      var position = 0
-      position = messages.collect().last._2
+      var position = messages.collect().last._2._2
+      var id = messages.collect().last._2._1
 
       var damage = newGraph.aggregateMessages[Tuple2[String,Int]](
         triplet => {
@@ -143,7 +143,7 @@ object test extends App {
           val posSolar = container.find(p => p._1 == triplet.srcId)
           val posEnnemi = container.find(p => p._1 == triplet.dstId)
 
-          if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) == position)
+          if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) == position&& triplet.dstId==id)
           {
             var ciblage =35 - nbrAttaque*5
 
