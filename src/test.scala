@@ -55,17 +55,25 @@ case class Warlord( id: String="Warlord", var hp: Int =141,attack : Int =10,armu
 
 }
 object test extends App {
-  def applyAction(vId :VertexId, perso : node , typeAction : String,dommage : Int) : node =
+  def applyAction(vId :VertexId, perso : node , typeAction : String,valeurAction : Int) : node =
   {
     if(typeAction.contentEquals("dmg")) {
 
-      perso.hp = perso.hp - dommage
+      perso.hp = perso.hp - valeurAction
       perso
     }
     else {
 
-      perso.position = perso.position + dommage
-      perso
+
+      if (typeAction.contentEquals("regeneration")) {
+        perso.hp = perso.hp + valeurAction
+        perso
+      }
+      else {
+
+        perso.position = perso.position + valeurAction
+        perso
+      }
     }
   }
 
@@ -165,7 +173,7 @@ object test extends App {
           if(!testRegen&&posSolar.last._2.hp<363)
             {
 
-              triplet.sendToSrc("dmg",-15)
+              triplet.sendToSrc("regeneration",15)
               testRegen= !testRegen
               val regen = sc.broadcast(testRegen)
             }
