@@ -75,7 +75,7 @@ object test extends App {
 
     val conf = new SparkConf()
       .setAppName("Combat 1")
-      .setMaster("local[*]")
+      .setMaster("local[3]")
     val sc = new SparkContext(conf)
     sc.setLogLevel("ERROR")
 
@@ -103,6 +103,8 @@ object test extends App {
   //  print("----- Tour du Solar ----\n")
     var nbrAttaque: Int = 0
     while (nbrAttaque < 4) {
+      val b = sc.broadcast(nbrAttaque)
+      print(b.value)
       /* Premier aggregate pour trouver l'ennemi le plus proche*/
       var messages = newGraph.aggregateMessages[Tuple2[VertexId,Int]](
         triplet => {
@@ -145,13 +147,13 @@ object test extends App {
 
           if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) == position&& triplet.dstId==id)
           {
-            var ciblage =35 - nbrAttaque*5
+            var ciblage =35 - b.value*5
 
             if(scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )<= triplet.srcAttr.porteMax)
             {
               if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position) <= 10)
               {
-                var ciblage =35 - nbrAttaque*5
+                var ciblage =35 - b.value*5
                 if(ciblage>=posEnnemi.last._2.armure) {
                   var degat = triplet.srcAttr.launchAttack("Sword")
                   triplet.sendToDst("dmg", degat)
@@ -165,12 +167,12 @@ object test extends App {
               }
               else
               {
-                var ciblage =31 - nbrAttaque*5
+                var ciblage =31 - b.value*5
                 if(ciblage>=posEnnemi.last._2.armure) {
 
                   var degat = triplet.srcAttr.launchAttack("Arc")
                   triplet.sendToDst("dmg", degat)
-                  print("Attaque sur un " + triplet.dstAttr.id + " avec l'arc! Le Solar lui inflige " + degat + " points de dommages (itération n°"+nbrAttaque+")\n")
+                  print("Attaque sur un " + triplet.dstAttr.id + " avec l'arc! Le Solar lui inflige " + degat + " points de dommages (itération n°"+b.value+")\n")
                 }
                 else {
                   triplet.sendToDst("dmg", 0)
@@ -180,7 +182,7 @@ object test extends App {
             }
             else
               {
-                if(nbrAttaque==0)
+                if(b.value==0)
                   {
                     print("On bouge vers les ennemis")
                     if (posSolar.last._2.position - posEnnemi.last._2.position  >0) {
