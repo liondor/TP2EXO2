@@ -39,14 +39,14 @@ package FC2 {
       maxColor
     }
 
-    def sendTieBreakValues(ctx: EdgeContext[node, String, Long]): Unit = {
-      print(ctx.dstAttr)
-      print(ctx.srcAttr+"\n")
-      if (ctx.srcAttr.knighthood == false && ctx.dstAttr.knighthood == false) {
-        ctx.sendToDst(ctx.srcAttr.tiebreakValue)
-        ctx.sendToSrc(ctx.dstAttr.tiebreakValue)
+      def sendTieBreakValues(ctx: EdgeContext[node, String, Long]): Unit = {
+        //print(ctx.dstAttr)
+        //print(ctx.srcAttr+"\n")
+        if (ctx.srcAttr.knighthood == false && ctx.dstAttr.knighthood == false) {
+          ctx.sendToDst(ctx.srcAttr.tiebreakValue)
+          ctx.sendToSrc(ctx.dstAttr.tiebreakValue)
+        }
       }
-    }
 
     def selectBest(id1: Long, id2: Long): Long = {
       if (id1 < id2) id1
@@ -84,7 +84,7 @@ package FC2 {
 
           myGraph = myGraph.joinVertices(messages)(
             (vid, sommet, bestId) => increaseColor(vid, sommet, bestId))
-
+  myGraph.vertices.foreach(print(_))
           //Ignorez : Code de debug
           /*var printedGraph = myGraph.vertices.collect()
           printedGraph = printedGraph.sortBy(_._1)

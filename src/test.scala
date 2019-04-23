@@ -102,6 +102,22 @@ object test extends App {
   while(true) {
   //  print("----- Tour du Solar ----\n")
     var nbrAttaque: Int = 0
+    var testRegen = false
+//    var regen = sc.broadcast(testRegen)
+
+    //newGraph.vertices=newGraph.vertices.mapValues
+    /*newGraph = Graph( newGraph.vertices.map(x => {
+      if(x._2.id.contentEquals("Solar"))
+      {
+        x._2.hp+=15
+        x
+      }
+      else
+      {
+        x
+      }
+      }),myEdges )*/
+
     while (nbrAttaque < 4) {
       val b = sc.broadcast(nbrAttaque)
       print(b.value)
@@ -139,16 +155,25 @@ object test extends App {
       var position = messages.collect().last._2._2
       var id = messages.collect().last._2._1
 
+
       var damage = newGraph.aggregateMessages[Tuple2[String,Int]](
         triplet => {
           var container = myGraph.vertices.collect()
           val posSolar = container.find(p => p._1 == triplet.srcId)
           val posEnnemi = container.find(p => p._1 == triplet.dstId)
 
+          if(!testRegen&&posSolar.last._2.hp<363)
+            {
+
+              triplet.sendToSrc("dmg",-15)
+              testRegen= !testRegen
+              val regen = sc.broadcast(testRegen)
+            }
+
+
           if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) == position&& triplet.dstId==id)
           {
             var ciblage =35 - b.value*5
-
             if(scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )<= triplet.srcAttr.porteMax)
             {
               if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position) <= 10)
@@ -238,6 +263,11 @@ object test extends App {
 
       }
       newGraph = newGraph.subgraph(vpred = (id, attr) => attr.hp > 0)
+
+      if(testRegen)
+        {
+          print("Le Solar se régénère ! + 15 pdv\n")
+        }
       newGraph.vertices.collect()
       myVertices.collect()
       print("\n")
