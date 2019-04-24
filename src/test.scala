@@ -63,6 +63,21 @@ case class WorgsRider( id : String ="Worg Rider", var hp: Int =13, armure: Int =
   }
 
 }
+case class Orc( id : String ="Orc", var hp: Int =142, armure: Int =17, vitesse: Int  = 40, var position : Int  =  scala.util.Random.nextInt(100), porteMax : Int = 10) extends  node
+{
+  override def launchAttack() : Int =
+  {
+
+      val r = scala.util.Random
+      var res = r.nextInt(7)+1 + 10
+      res += r.nextInt(7)+1 + 7
+      res
+  }
+
+}
+
+//val orc : Node = new Node(id="Orc",hp=142,armure=17,vitesse = 40)*/
+
 object test extends App {
   def applyAction(vId :VertexId, perso : node , typeAction : String,valeurAction : Int) : node =
   {
@@ -75,15 +90,16 @@ object test extends App {
 
 
       if (typeAction.contentEquals("regeneration")) {
+        print("Le Solar se régénère ! +" )
         if(perso.hp + valeurAction>=363)
         {
+          print((363-perso.hp)+" pdv ! \n" )
           perso.hp = 363
         }else {
+          print("15 pdv : \n" )
           perso.hp = perso.hp + valeurAction
-
         }
         perso
-
       }
       else {
 
@@ -103,21 +119,18 @@ object test extends App {
     val sc = new SparkContext(conf)
     sc.setLogLevel("ERROR")
 
-   /* val solar : Node = new Node(id="Solar",hp=363,armure=44,vitesse =50)
-    val warlord : Node = new Node(id="Warlord",hp=141,armure=27,vitesse = 30,)
-    val worgs : Node = new Node(id="Worg",hp=13,armure=18,vitesse = 20)
-    val orc : Node = new Node(id="Orc",hp=142,armure=17,vitesse = 40)*/
 
 
   /*--------------  Set up (pas sur pour le .cache)        -----------------*/
   var myVertices : RDD[(VertexId,node)]= sc.parallelize(Array((1L,Solar()),(2L,Warlord()),(3L,Warlord())
     ,(4L,WorgsRider()),(5L,WorgsRider()),(6L,WorgsRider()),(7L,WorgsRider()), (8L,WorgsRider()),
     (9L,WorgsRider()),
-    (10L,WorgsRider())))
+    (10L,WorgsRider()),(11L,Orc()),(12L,Orc()),(13L,Orc()),(14L,Orc())))
   myVertices.cache()
   var myEdges = sc.parallelize(Array(Edge(1L,2L,"1"),Edge(1L,3L,"2"),Edge(1L,4L,"3"),Edge(1L,6L,"5"),
                           Edge(1L,5L,"4"),Edge(1L,7L,"6")
                           ,Edge(1L,8L,"7"),Edge(1L,9L,"8"),Edge(1L,10L,"9")
+                          ,Edge(1L,11L,"10"),Edge(1L,12L,"11"),Edge(1L,13L,"12"),Edge(1L,14L,"13")
   )
   )
   var myGraph = Graph(myVertices, myEdges)
@@ -135,34 +148,25 @@ object test extends App {
 
     var nbrAttaque: Int = 0
     var testRegen = false
-//    var regen = sc.broadcast(testRegen)
 
-    //newGraph.vertices=newGraph.vertices.mapValues
-    /*newGraph = Graph( newGraph.vertices.map(x => {
-      if(x._2.id.contentEquals("Solar"))
-      {
-        x._2.hp+=15
-        x
-      }
-      else
-      {
-        x
-      }
-      }),myEdges )*/
-
-    var container = myGraph.vertices.collect()
+    var container =  myGraph.vertices.collect()
+    if (container.find(p => p._1 == 1L).last._2.hp<=0) {
+      print("----- Fin de la partie ! ----\n Les ennemis se sont fait de jolies colliers avec les os du Solar...\n")
+      print("État final : \n")
+      newGraph.vertices.foreach(print(_))
+      System.exit(0);
+    }
 
     while (nbrAttaque < 4) {
       container = myGraph.vertices.collect()
       val b = sc.broadcast(nbrAttaque)
-      print(b.value)
       /* Premier aggregate pour trouver l'ennemi le plus proche*/
       var messages = myGraph.aggregateMessages[Tuple2[VertexId,Int]](
         triplet => {
           val posSolar = container.find(p => p._1 == triplet.srcId)
           val posEnnemi = container.find(p => p._1 == triplet.dstId)
 
-          if (posEnnemi.last._2.hp > 0) {
+          if (posEnnemi.last._2.hp > 0 ) {
             triplet.sendToSrc(triplet.dstId,scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position))
           }
         },
@@ -196,7 +200,7 @@ object test extends App {
           val posSolar = container.find(p => p._1 == triplet.srcId)
           val posEnnemi = container.find(p => p._1 == triplet.dstId)
 
-          if(!testRegen&&posSolar.last._2.hp<363)
+          if(b.value==0&&posSolar.last._2.hp<363)
             {
 
               triplet.sendToSrc("regeneration",15)
@@ -304,8 +308,8 @@ object test extends App {
         {
           print("Le Solar se régénère ! + 15 pdv\n")
         }
-      newGraph.vertices.collect()
-      myVertices.collect()
+      //newGraph.vertices.collect()
+      //myVertices.collect()
       print("\n")
     }
 
@@ -316,7 +320,7 @@ object test extends App {
         val posSolar = container.find(p => p._1 == triplet.srcId)
         val posEnnemi = container.find(p => p._1 == triplet.dstId)
 
-        if (posEnnemi.last._2.hp > 0) {
+        if (posEnnemi.last._2.hp > 0 && posSolar.last._2.hp>0) {
 
           if(scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )<= triplet.dstAttr.porteMax)
           {
@@ -364,7 +368,14 @@ object test extends App {
 
       }
     )
+    container =  myGraph.vertices.collect()
 
+    if (damageEnemy.isEmpty()&& container.find(p => p._1 == 1L).last._2.hp<=0) {
+      print("----- Fin de la partie ! ----\n Les ennemis se sont fait de jolies colliers avec les os du Solar...\n")
+      print("État final : \n")
+      newGraph.vertices.foreach(print(_))
+      System.exit(0);
+    }
     print("\n")
     //print("----- Fin du tour----\n")
     newGraph = newGraph.joinVertices(damageEnemy)(
