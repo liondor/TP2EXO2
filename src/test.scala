@@ -15,11 +15,20 @@ val vitesse : Int
   {
     0
   }
+  def launchAttack (armureCible : Int) : Int =
+  {
+    0
+  }
+  def launchAttack (armureCible : Int, nbAttque : Int ) : Int =
+  {
+    0
+  }
   def launchAttack (s : String) : Int =
   {
     0
   }
-  override def toString: String = s"id : $id hp : $hp armor : $armure  vitesse : $vitesse position : $position porté Maximale : $porteMax\n"
+
+  override def toString: String = s"id : $id hp : $hp  position : $position \n"
 }
 /* La caractéristique attaque ne sert  à rien pour le solar*/
 case class Solar(id: String= "Solar", var  hp : Int=363, armure: Int=44, vitesse : Int=50, var position: Int= scala.util.Random.nextInt(100), porteMax : Int = 110) extends node
@@ -29,7 +38,7 @@ case class Solar(id: String= "Solar", var  hp : Int=363, armure: Int=44, vitesse
     if(arme.contentEquals("Sword"))
        {
          val r = scala.util.Random
-         var res = 18+ r.nextInt(5)+r.nextInt(5)+r.nextInt(5)+3
+         var res = 18+ r.nextInt(6)+r.nextInt(6)+r.nextInt(6)+3
          res
        }
     else
@@ -42,36 +51,92 @@ case class Solar(id: String= "Solar", var  hp : Int=363, armure: Int=44, vitesse
   }
 
 }//scala.util.Random.nextInt(500)
-case class Warlord( id: String="Warlord", var hp: Int =141, armure: Int=27,vitesse: Int = 30, var position: Int= scala.util.Random.nextInt(100), porteMax : Int = 10) extends node
+case class Warlord( id: String="Warlord", var hp: Int =141, armure: Int=27,vitesse: Int = 30, var position: Int= scala.util.Random.nextInt(300), porteMax : Int = 10) extends node
 {
-  override def launchAttack() : Int =
-  {
+  override def launchAttack(armureCible : Int) : Int = {
+    print("Un " + id + " attaque le Solar ! ")
+    var res = 0
+    //Est ce que l'on touche l'ennemi ?
     val r = scala.util.Random
-    var res = 10+ r.nextInt(7)+1
+    var randomNumber = r.nextInt(20)
+    var testAttaque = randomNumber + 1 + 24
+    if (testAttaque >= armureCible || randomNumber == 19) {
+      res = 10 + r.nextInt(7) + 1
+      print("l lui inflige " + res + " points de dommages\n")
+    }
+    else {
+    print("... Et se rate\n")
+
+  }
+
     res
   }
 
+
 }
 
-case class WorgsRider( id : String ="Worg Rider", var hp: Int =13, armure: Int =18, vitesse: Int  = 20, var position : Int  =  scala.util.Random.nextInt(100), porteMax : Int = 10) extends  node
+case class WorgsRider( id : String ="Worg Rider", var hp: Int =13, armure: Int =18, vitesse: Int  = 20, var position : Int  =  scala.util.Random.nextInt(300), porteMax : Int = 10) extends  node
 {
-  override def launchAttack() : Int =
+  override def launchAttack(armureCible : Int ) : Int =
   {
+    print("Un " + id + " attaque le Solar ! ")
+    var res=0
+    //Est ce que l'on touche l'ennemi ?
     val r = scala.util.Random
-    var res = r.nextInt(7)+r.nextInt(7)+2
+    var randomNumber = r.nextInt(20)
+    var testAttaque = randomNumber + 1 + 24
+    if (testAttaque >= armureCible || randomNumber == 19)
+    {
+      res= r.nextInt(7)+r.nextInt(7)+2
+      print("ll lui inflige " + res + " points de dommages\n")
+
+    } else {
+        print("... Et se rate\n")
+
+      }
+
     res
+
   }
 
 }
-case class Orc( id : String ="Orc", var hp: Int =142, armure: Int =17, vitesse: Int  = 40, var position : Int  =  scala.util.Random.nextInt(100), porteMax : Int = 10) extends  node
+case class Orc( id : String ="Orc", var hp: Int =142, armure: Int =17, vitesse: Int  = 40, var position : Int  =  scala.util.Random.nextInt(300), porteMax : Int = 10) extends  node
 {
-  override def launchAttack() : Int =
+  override def launchAttack(armureCible :Int) : Int =
   {
+    print("Un " + id + " attaque le Solar ! ")
 
-      val r = scala.util.Random
-      var res = r.nextInt(7)+1 + 10
-      res += r.nextInt(7)+1 + 7
-      res
+    var res=0
+    //Est ce que l'on touche l'ennemi ?
+    val r = scala.util.Random
+    var randomNumber = r.nextInt(20)
+    var testAttaque = randomNumber + 1 + 24
+    if (testAttaque >= armureCible || randomNumber == 19)
+    {
+      res=  r.nextInt(8)+1 + 10
+
+
+    }
+      randomNumber = r.nextInt(20)
+       testAttaque = randomNumber + 1 + 24
+      if (testAttaque > armureCible || randomNumber == 19)
+    {
+
+      res += r.nextInt(8)+1 + 7
+    }
+
+    if(res>0)
+      {
+        print(" Il lui inflige "+res+" point de dommage \n")
+
+      }
+    else
+    {
+      print(" Il se rate lamentablement....\n")
+    }
+    res
+
+
   }
 
 }
@@ -217,7 +282,7 @@ object test extends App {
               var r = scala.util.Random
               if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position) <= 10)
               {
-                var ciblage =r.nextInt(19)+1+35 - b.value*5
+                var ciblage =r.nextInt(20)+1+35 - b.value*5
                 if(ciblage>=posEnnemi.last._2.armure) {
                   var degat = triplet.srcAttr.launchAttack("Sword")
                   triplet.sendToDst("dmg", degat)
@@ -231,7 +296,7 @@ object test extends App {
               }
               else
               {
-                var ciblage =r.nextInt(19)+1+31 - b.value*5
+                var ciblage =r.nextInt(20)+1+31 - b.value*5
                 if(ciblage>=posEnnemi.last._2.armure) {
 
                   var degat = triplet.srcAttr.launchAttack("Arc")
@@ -316,6 +381,7 @@ object test extends App {
 
     /* On regarde ce que les ennemis vont faire !*/
   //  print("----- Tour des ennemis----\n")
+    container =  myGraph.vertices.collect()
     val damageEnemy = newGraph.aggregateMessages[Tuple2[String,Int]](
       triplet => {
         val posSolar = container.find(p => p._1 == triplet.srcId)
@@ -325,10 +391,8 @@ object test extends App {
 
           if(scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )<= triplet.dstAttr.porteMax)
           {
-            var degat = posEnnemi.last._2.launchAttack()
+            var degat = posEnnemi.last._2.launchAttack(posSolar.last._2.armure)
             triplet.sendToSrc("dmg",degat)
-            print("Un " + triplet.dstAttr.id + " attaque le Solar !  Il lui inflige " + degat + " points de dommages\n")
-
           }
           else
           {
