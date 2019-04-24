@@ -211,12 +211,13 @@ object test extends App {
 
           if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) == position&& triplet.dstId==id )
           {
-            var ciblage =35 - b.value*5
             if(scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )<= triplet.srcAttr.porteMax)
             {
+              var ciblage =35 - b.value*5
+              var r = scala.util.Random
               if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position) <= 10)
               {
-                var ciblage =35 - b.value*5
+                var ciblage =r.nextInt(19)+1+35 - b.value*5
                 if(ciblage>=posEnnemi.last._2.armure) {
                   var degat = triplet.srcAttr.launchAttack("Sword")
                   triplet.sendToDst("dmg", degat)
@@ -230,7 +231,7 @@ object test extends App {
               }
               else
               {
-                var ciblage =31 - b.value*5
+                var ciblage =r.nextInt(19)+1+31 - b.value*5
                 if(ciblage>=posEnnemi.last._2.armure) {
 
                   var degat = triplet.srcAttr.launchAttack("Arc")
