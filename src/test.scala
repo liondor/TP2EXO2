@@ -7,24 +7,22 @@ import org.apache.spark.rdd.RDD
 trait node {
 val id: String
 var  hp: Int
-  val attack: Int
 val armure: Int
 val vitesse : Int
   var position :Int
   val porteMax : Int
   def launchAttack () : Int =
   {
-    attack
+    0
   }
   def launchAttack (s : String) : Int =
   {
-    attack
+    0
   }
-
-  override def toString: String = s"id : $id hp : $hp attack : $attack armor : $armure  vitesse : $vitesse position : $position porté Maximale : $porteMax\n"
+  override def toString: String = s"id : $id hp : $hp armor : $armure  vitesse : $vitesse position : $position porté Maximale : $porteMax\n"
 }
 /* La caractéristique attaque ne sert  à rien pour le solar*/
-case class Solar(id: String= "Solar", var  hp : Int=363,  attack : Int =18,  armure: Int=44, vitesse : Int=50, var position: Int= scala.util.Random.nextInt(100), porteMax : Int = 110) extends node
+case class Solar(id: String= "Solar", var  hp : Int=363, armure: Int=44, vitesse : Int=50, var position: Int= scala.util.Random.nextInt(100), porteMax : Int = 110) extends node
 {
    override def launchAttack(arme : String) : Int =
   {
@@ -44,12 +42,23 @@ case class Solar(id: String= "Solar", var  hp : Int=363,  attack : Int =18,  arm
   }
 
 }//scala.util.Random.nextInt(500)
-case class Warlord( id: String="Warlord", var hp: Int =141,attack : Int =10,armure: Int=27,vitesse: Int = 30, var position: Int= scala.util.Random.nextInt(100), porteMax : Int = 10) extends node
+case class Warlord( id: String="Warlord", var hp: Int =141, armure: Int=27,vitesse: Int = 30, var position: Int= scala.util.Random.nextInt(100), porteMax : Int = 10) extends node
 {
   override def launchAttack() : Int =
   {
     val r = scala.util.Random
-    var res = attack+ r.nextInt(7)+1
+    var res = 10+ r.nextInt(7)+1
+    res
+  }
+
+}
+
+case class WorgsRider( id : String ="Worg Rider", var hp: Int =13, armure: Int =18, vitesse: Int  = 20, var position : Int  =  scala.util.Random.nextInt(100), porteMax : Int = 10) extends  node
+{
+  override def launchAttack() : Int =
+  {
+    val r = scala.util.Random
+    var res = r.nextInt(7)+r.nextInt(7)+2
     res
   }
 
@@ -66,8 +75,15 @@ object test extends App {
 
 
       if (typeAction.contentEquals("regeneration")) {
-        perso.hp = perso.hp + valeurAction
+        if(perso.hp + valeurAction>=363)
+        {
+          perso.hp = 363
+        }else {
+          perso.hp = perso.hp + valeurAction
+
+        }
         perso
+
       }
       else {
 
@@ -83,7 +99,7 @@ object test extends App {
 
     val conf = new SparkConf()
       .setAppName("Combat 1")
-      .setMaster("local[3]")
+      .setMaster("local[*]")
     val sc = new SparkContext(conf)
     sc.setLogLevel("ERROR")
 
@@ -94,21 +110,29 @@ object test extends App {
 
 
   /*--------------  Set up (pas sur pour le .cache)        -----------------*/
-  var myVertices : RDD[(VertexId,node)]= sc.parallelize(Array((1L,Solar()),(2L,Warlord()),(3L,Warlord())))
+  var myVertices : RDD[(VertexId,node)]= sc.parallelize(Array((1L,Solar()),(2L,Warlord()),(3L,Warlord())
+    ,(4L,WorgsRider()),(5L,WorgsRider()),(6L,WorgsRider()),(7L,WorgsRider()), (8L,WorgsRider()),
+    (9L,WorgsRider()),
+    (10L,WorgsRider())))
   myVertices.cache()
-  var myEdges = sc.parallelize(Array(Edge(1L,2L,"1"),Edge(1L,3L,"2")))
+  var myEdges = sc.parallelize(Array(Edge(1L,2L,"1"),Edge(1L,3L,"2"),Edge(1L,4L,"3"),Edge(1L,6L,"5"),
+                          Edge(1L,5L,"4"),Edge(1L,7L,"6")
+                          ,Edge(1L,8L,"7"),Edge(1L,9L,"8"),Edge(1L,10L,"9")
+  )
+  )
   var myGraph = Graph(myVertices, myEdges)
   myGraph.cache()
 
 
   print("----- Graphe de base ----\n")
-  myGraph.vertices.foreach(print(_))
+  myGraph.vertices.collect().foreach(print(_))
   print("\n")
   var newGraph = myGraph
 
   /*-------------- Début de la partie   ----------------------------------------*/
   while(true) {
   //  print("----- Tour du Solar ----\n")
+
     var nbrAttaque: Int = 0
     var testRegen = false
 //    var regen = sc.broadcast(testRegen)
@@ -126,15 +150,18 @@ object test extends App {
       }
       }),myEdges )*/
 
+    var container = myGraph.vertices.collect()
+
     while (nbrAttaque < 4) {
+      container = myGraph.vertices.collect()
       val b = sc.broadcast(nbrAttaque)
       print(b.value)
       /* Premier aggregate pour trouver l'ennemi le plus proche*/
-      var messages = newGraph.aggregateMessages[Tuple2[VertexId,Int]](
+      var messages = myGraph.aggregateMessages[Tuple2[VertexId,Int]](
         triplet => {
-          var container = myGraph.vertices.collect()
           val posSolar = container.find(p => p._1 == triplet.srcId)
           val posEnnemi = container.find(p => p._1 == triplet.dstId)
+
           if (posEnnemi.last._2.hp > 0) {
             triplet.sendToSrc(triplet.dstId,scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position))
           }
@@ -166,7 +193,6 @@ object test extends App {
 
       var damage = newGraph.aggregateMessages[Tuple2[String,Int]](
         triplet => {
-          var container = myGraph.vertices.collect()
           val posSolar = container.find(p => p._1 == triplet.srcId)
           val posEnnemi = container.find(p => p._1 == triplet.dstId)
 
@@ -179,7 +205,7 @@ object test extends App {
             }
 
 
-          if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) == position&& triplet.dstId==id)
+          if (scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position ) == position&& triplet.dstId==id )
           {
             var ciblage =35 - b.value*5
             if(scala.math.abs(posSolar.last._2.position - posEnnemi.last._2.position )<= triplet.srcAttr.porteMax)
@@ -259,6 +285,8 @@ object test extends App {
       //newGraph.vertices.foreach(print(_))
       newGraph = newGraph.joinVertices(damage)(
         (vid, personnage, msg) => applyAction(vid, personnage,msg._1, msg._2))
+      //newGraph.vertices.foreach(print(_))
+
       val action = damage.collect().last._2._1
        if(action.contentEquals("mvmt"))
         {
@@ -285,7 +313,6 @@ object test extends App {
   //  print("----- Tour des ennemis----\n")
     val damageEnemy = newGraph.aggregateMessages[Tuple2[String,Int]](
       triplet => {
-        var container = myGraph.vertices.collect()
         val posSolar = container.find(p => p._1 == triplet.srcId)
         val posEnnemi = container.find(p => p._1 == triplet.dstId)
 
