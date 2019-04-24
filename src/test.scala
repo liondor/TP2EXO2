@@ -54,20 +54,31 @@ case class Solar(id: String= "Solar", var  hp : Int=363, armure: Int=44, vitesse
 case class Warlord( id: String="Warlord", var hp: Int =141, armure: Int=27,vitesse: Int = 30, var position: Int= scala.util.Random.nextInt(300), porteMax : Int = 10) extends node
 {
   override def launchAttack(armureCible : Int) : Int = {
-    print("Un " + id + " attaque le Solar ! ")
+    print()
     var res = 0
     //Est ce que l'on touche l'ennemi ?
     val r = scala.util.Random
-    var randomNumber = r.nextInt(20)
-    var testAttaque = randomNumber + 1 + 24
+    var randomNumber = 0
+    var testAttaque =0
+    var nbAttaque : Int =0
+    for(nbAttaque <- 0 to 2)
+      {
+        randomNumber = r.nextInt(20)
+        testAttaque=randomNumber + 1 + 24 -(5*nbAttaque)
     if (testAttaque >= armureCible || randomNumber == 19) {
-      res = 10 + r.nextInt(7) + 1
-      print("l lui inflige " + res + " points de dommages\n")
-    }
-    else {
-    print("... Et se rate\n")
+      res += 10 + r.nextInt(7) + 1
 
-  }
+    }
+
+      }
+    if(res>0)
+       {
+          print("Un "+ id + " attaque le Solar ! Il lui inflige " + res + " points de dommages\n")
+       }
+    else {
+          print("Un "+ id + " attaque le Solar et se rate\n")
+
+    }
 
     res
   }
@@ -109,22 +120,24 @@ case class Orc( id : String ="Orc", var hp: Int =142, armure: Int =17, vitesse: 
     var res=0
     //Est ce que l'on touche l'ennemi ?
     val r = scala.util.Random
-    var randomNumber = r.nextInt(20)
-    var testAttaque = randomNumber + 1 + 24
-    if (testAttaque >= armureCible || randomNumber == 19)
-    {
-      res=  r.nextInt(8)+1 + 10
-
-
-    }
+    var randomNumber = 0
+    var testAttaque =0
+    var nbAttaque : Int =0
+    for(nbAttaque <- 0 to 2) {
       randomNumber = r.nextInt(20)
-       testAttaque = randomNumber + 1 + 24
-      if (testAttaque > armureCible || randomNumber == 19)
-    {
+      testAttaque = randomNumber + 1 + 19 - (5 * nbAttaque)
+      if (testAttaque >= armureCible || randomNumber == 19) {
+        res += r.nextInt(8) + 1 + 10
 
-      res += r.nextInt(8)+1 + 7
+
+      }
+      randomNumber = r.nextInt(20)
+      testAttaque = randomNumber + 1 + 24
+      if (testAttaque > armureCible || randomNumber == 19) {
+
+        res += r.nextInt(8) + 1 + 7
+      }
     }
-
     if(res>0)
       {
         print(" Il lui inflige "+res+" point de dommage \n")
